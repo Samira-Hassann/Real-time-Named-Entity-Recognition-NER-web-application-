@@ -3,4 +3,4 @@ transformers
 gradio
 seqeval
 safetensors
-
+huggingface-hub
