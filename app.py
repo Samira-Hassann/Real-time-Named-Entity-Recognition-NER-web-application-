@@ -1,195 +1,67 @@
-
 import gradio as gr
-import html
-
-from transformers import (
-    AutoTokenizer,
-    AutoModelForTokenClassification,
-    pipeline
-)
-
-# ==========================================
-# 1. Model Configuration
-# ==========================================
+from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
 MODEL_ID = "Samira-Hassan/bert-ner-production-model"
 
-# ==========================================
-# 2. Load Model and Tokenizer
-# ==========================================
-
+print("Loading model and tokenizer from Hugging Face...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForTokenClassification.from_pretrained(MODEL_ID)
 
-model = AutoModelForTokenClassification.from_pretrained(
-    MODEL_ID
-)
+ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
 
-ner_pipeline = pipeline(
-    "token-classification",
-    model=model,
-    tokenizer=tokenizer,
-    aggregation_strategy="simple",
-    device=-1
-)
-
-# ==========================================
-# 3. Entity Colors
-# ==========================================
-
-ENTITY_COLORS = {
-    "PER": "#DCEBFF",
-    "ORG": "#DDF5E5",
-    "LOC": "#FFE8C7",
-    "MISC": "#F0DFFF"
-}
-
-
-# ==========================================
-# 4. Prediction Function
-# ==========================================
-
-def predict_entities(text):
-
-    if not text or not text.strip():
-        return (
-            "<p>Please enter some text.</p>",
-            []
-        )
-
-    predictions = ner_pipeline(
-        text,
-        truncation=True
-    )
-
-    # Sort entities by their positions
-    predictions = sorted(
-        predictions,
-        key=lambda x: x["start"]
-    )
-
-    highlighted_text = ""
-    previous_end = 0
-    results = []
-
-    for entity in predictions:
-
-        start = entity["start"]
-        end = entity["end"]
-
-        label = entity["entity_group"]
-        word = entity["word"]
-        confidence = float(entity["score"])
-
-        # Avoid overlapping spans
-        if start < previous_end:
-            continue
-
-        # Add normal text
-        highlighted_text += html.escape(
-            text[previous_end:start]
-        )
-
-        color = ENTITY_COLORS.get(
-            label,
-            "#EEEEEE"
-        )
-
-        # Add highlighted entity
-        highlighted_text += f"""
-        <span style="
-            background-color: {color};
-            padding: 4px 7px;
-            border-radius: 5px;
-            margin: 2px;
-            display: inline-block;
-        ">
-            <b>{html.escape(text[start:end])}</b>
-            <small>[{html.escape(label)}]</small>
-        </span>
-        """
-
-        results.append({
-            "Entity": text[start:end],
-            "Label": label,
-            "Confidence": round(confidence, 4),
-            "Start": start,
-            "End": end
+def predict_ner(text):
+    if not text.strip():
+        return {"text": text, "entities": []}
+    
+    results = ner_pipeline(text)
+    
+    entities = []
+    for ent in results:
+        entities.append({
+            "entity": ent["entity_group"],
+            "start": ent["start"],
+            "end": ent["end"]
         })
+    
+    return {"text": text, "entities": entities}
 
-        previous_end = end
-
-    # Add remaining text
-    highlighted_text += html.escape(
-        text[previous_end:]
-    )
-
-    highlighted_html = f"""
-    <div style="
-        font-size: 17px;
-        line-height: 2.5;
-        padding: 15px;
-        border-radius: 10px;
-    ">
-        {highlighted_text}
-    </div>
-    """
-
-    return highlighted_html, results
-
-
-# ==========================================
-# 5. Gradio Interface
-# ==========================================
-
-with gr.Blocks(
-    theme=gr.themes.Soft(),
-    title="BERT NER Deployment"
-) as demo:
-
-    gr.Markdown("""
-    # 🧠 BERT Named Entity Recognition
-
-    Fine-tuned BERT model for identifying named entities
-    in English text.
-
-    **Entity Types:** PER | ORG | LOC | MISC
-    """)
-
-    input_text = gr.Textbox(
-        label="Input Text",
-        placeholder="Enter your text here...",
-        lines=5
-    )
-
-    predict_button = gr.Button(
-        "Recognize Entities",
-        variant="primary"
-    )
-
-    gr.Markdown("### 🎨 Highlighted Entities")
-
-    highlighted_output = gr.HTML()
-
-    gr.Markdown("### 📊 Prediction Results")
-
-    results_output = gr.JSON()
-
+# Build the Gradio web interface
+with gr.Blocks(theme=gr.themes.Soft()) as demo:
+    gr.Markdown("# 🏷️ CoNLL-2003 Named Entity Recognition (BERT)")
+    gr.Markdown(f"Production NER web application powered by your fine-tuned BERT model (`{MODEL_ID}`).")
+    
+    with gr.Row():
+        with gr.Column():
+            input_text = gr.Textbox(
+                label="Input English Text",
+                placeholder="Example: Tim Cook visited Apple headquarters in California.",
+                lines=4
+            )
+            submit_btn = gr.Button("Extract Entities", variant="primary")
+            
+        with gr.Column():
+            output_highlight = gr.HighlightedText(
+                label="Extracted Entities",
+                combine_adjacent=True,
+                show_legend=True,
+                color_map={
+                    "PER": "#60a5fa", 
+                    "ORG": "#4ade80", 
+                    "LOC": "#c084fc", 
+                    "MISC": "#fb923c"
+                }
+            )
+            
     gr.Examples(
         examples=[
-            ["Barack Obama visited London."],
-            ["Apple hired John in New York."],
-            ["Microsoft is an American company."]
+            ["SOCCER - JAPAN GET LUCKY WIN , CHINA IN SURPRISE DEFEAT ."],
+            ["Elon Musk announced that Tesla will open a new factory in Germany."],
+            ["Reuters reported that the United Nations meeting in New York ended yesterday."]
         ],
         inputs=input_text
     )
+    
+    submit_btn.click(fn=predict_ner, inputs=input_text, outputs=output_highlight)
 
-    predict_button.click(
-        fn=predict_entities,
-        inputs=input_text,
-        outputs=[
-            highlighted_output,
-            results_output
-        ]
-    )
-
-demo.launch()
+if __name__ == "__main__":
+    demo.launch()
