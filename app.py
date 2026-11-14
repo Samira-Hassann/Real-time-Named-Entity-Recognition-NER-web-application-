@@ -1,49 +1,96 @@
+import gradio as gr
+import torch
+from transformers import AutoModelForTokenClassification, AutoTokenizer
+
+MODEL_ID = "./bert_ner_production_model"
+
+print("Loading BERT NER model and tokenizer...")
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForTokenClassification.from_pretrained(MODEL_ID)
+model.eval()
+
+id2label = {
+    0: "O",
+    1: "B-PER",
+    2: "I-PER",
+    3: "B-ORG",
+    4: "I-ORG",
+    5: "B-LOC",
+    6: "I-LOC",
+    7: "B-MISC",
+    8: "I-MISC",
+}
 
 
+def predict_ner(text):
+  if not text.strip():
+    return []
+
+  tokens = text.split()
+  inputs = tokenizer(
+      tokens,
+      is_split_into_words=True,
+      return_tensors="pt",
+      padding=True,
+      truncation=True,
+  )
+
+  with torch.no_grad():
+    outputs = model(**inputs)
+
+  predictions = torch.argmax(outputs.logits, dim=2)
+  word_ids = inputs.word_ids(batch_index=0)
+  predicted_tags = []
+  previous_word_idx = None
+
+  for word_idx in word_ids:
+    if word_idx is None:
+      continue
+    if word_idx != previous_word_idx:
+      token_idx = inputs.word_to_tokens(word_idx).start
+      pred_id = predictions[0][token_idx].item()
+      predicted_tags.append(id2label[pred_id])
+      previous_word_idx = word_idx
+
+  highlight_data = []
+  for token, tag in zip(tokens, predicted_tags):
+    entity_name = tag.split("-")[-1] if tag != "O" else None
+    highlight_data.append((token, entity_name))
+
+  return highlight_data
 
 
-import streamlit as st
-from PIL import Image
-import numpy as np
-import cv2
-from ultralytics import YOLO
+# Gradio Web UI Interface
+demo = gr.Interface(
+    fn=predict_ner,
+    inputs=gr.Textbox(
+        lines=3,
+        placeholder=(
+            "Enter an English sentence here (e.g., President Clinton visited"
+            " Germany)..."
+        ),
+        label="Input Sentence",
+    ),
+    outputs=gr.HighlightedText(
+        label="Extracted Named Entities",
+        combine_adjacent=True,
+        colors={
+            "PER": "#D6EAF8",
+            "ORG": "#D5F5E3",
+            "LOC": "#E8DAEF",
+            "MISC": "#FDEBD0",
+        },
+    ),
+    title="🏷️ Named Entity Recognition (NER) with Fine-Tuned BERT",
+    description=(
+        "Real-time Named Entity Extraction using fine-tuned BERT model on"
+        " CoNLL-2003 dataset."
+    ),
+    examples=[
+        ["SOCCER - JAPAN GET LUCKY WIN , CHINA IN SURPRISE DEFEAT ."],
+        ["President Clinton visited Germany and met with officials in Berlin."],
+    ],
+)
 
-# ضبط إعدادات الصفحة
-st.set_page_config(page_title="Face Mask Detection", page_icon="😷")
-
-st.title("😷 Face Mask Detection System")
-st.write("Upload an image to detect whether people are wearing masks or not.")
-
-# تحميل النموذج (قم بتغيير 'best.pt' إلى مسار نموذج YOLO الخاص بك)
-@st.cache_resource
-def load_model():
-    return YOLO("best.pt")
-
-try:
-    model = load_model()
-except Exception as e:
-    st.error("لم يتم العثور على ملف النموذج، يرجى التأكد من وجود ملف النموذج (مثل best.pt) في المجلد.")
-
-# أداة رفع الصور
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    # قراءة الصورة بواسطة PIL
-    image = Image.open(uploaded_file)
-    
-    # عرض الصورة الأصلية باستخدام use_container_width المصححة
-    st.image(image, caption="Uploaded Image", use_container_width=True)
-    
-    if st.button("Detect Mask"):
-        with st.spinner("Processing image..."):
-            # تحويل الصورة إلى مصفوفة Numpy لـ OpenCV / YOLO
-            img_array = np.array(image.convert("RGB"))
-            
-            # تشغيل نموذج YOLO للتعرف على الكمامات
-            results = model(img_array)
-            
-            # رسم النتائج على الصورة
-            res_plotted = results[0].plot()
-            
-            # عرض الصورة بعد الاكتشاف
-            st.image(res_plotted, caption="Detection Result", use_container_width=True)
+if __name__ == "__main__":
+  demo.launch()
