@@ -2,3 +2,5 @@ torch
 transformers
 gradio
 seqeval
+safetensors
+
