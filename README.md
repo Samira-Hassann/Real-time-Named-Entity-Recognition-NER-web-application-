@@ -6,18 +6,19 @@ Classify English text entities into four standard categories (**PER, ORG, LOC, M
 
 ## 🎬 Application Demo
 
-**▶️ [Watch the Local Deployment Demo](YOUR_DEMO_VIDEO_LINK)**
+**▶️ [Watch the Local Deployment Demo](https://github.com/Samira-Hassann/Real-time-Named-Entity-Recognition-NER-web-application-/blob/main/assets/NER%20APP.mp4)**
 
 The following screenshots showcase the locally deployed Gradio application.
 
 ### Application Interface
 
-![NER Application Interface](assets/demo-input.png)
+![NER Application Interface](assets/image.png)
 
 ### Entity Extraction Results
 
-![NER Prediction Results](assets/demo-results.png)
+![NER Prediction Results](assets/image2.png)
 
+![NER Prediction Results](assets/image3.png)
 ---
 
 ## 📌 Explore the Project
