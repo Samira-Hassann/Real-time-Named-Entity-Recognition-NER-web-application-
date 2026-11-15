@@ -447,9 +447,21 @@ HERO = f"""
 """
 
 EXAMPLES = [
-    ("Soccer headline", "SOCCER - JAPAN GET LUCKY WIN , CHINA IN SURPRISE DEFEAT ."),
-    ("Tesla in Germany", "Elon Musk announced that Tesla will open a new factory in Germany."),
-    ("UN in New York", "Reuters reported that the United Nations meeting in New York ended yesterday."),
+    (
+        "Justin Bieber in Paris",
+        "Canadian singer Justin Bieber performed at an international music festival in Paris, "
+        "organized in cooperation with UNESCO and attended by French, British, and American artists.",
+    ),
+    (
+        "Narendra Modi at Google",
+        "Indian Prime Minister Narendra Modi visited the headquarters of Google in California, "
+        "where he met American technology executives to discuss cooperation between Indian and American companies.",
+    ),
+    (
+        "Cristiano Ronaldo and FIFA",
+        "Portuguese football star Cristiano Ronaldo joined an international sports event organized by FIFA "
+        "in London, where he met Brazilian, Italian, and Spanish players representing their national teams.",
+    ),
 ]
 
 # ---------------------------------------------------------------------------
