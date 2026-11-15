@@ -16,9 +16,10 @@ The following screenshots showcase the locally deployed Gradio application.
 
 ### Entity Extraction Results
 
-![NER Prediction Results](assets/image2.png)
+![NER Prediction Results1](assets/image2.png)
 
-![NER Prediction Results](assets/image3.png)
+![NER Prediction Results2](assets/image3.png)
+
 ---
 
 ## 📌 Explore the Project
@@ -164,9 +165,12 @@ Real-time-Named-Entity-Recognition-NER-web-application-/
 ├── README.md
 │
 └── assets/
-    ├── demo-input.png
-    └── demo-results.png
-```
+    ├── NER APP.mp4
+    └── image.png
+    └── image2.png
+    └── image3.png
+
+
 
 ---
 
