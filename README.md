@@ -1,7 +1,22 @@
-
 # 🏷️ CoNLL-2003 Named Entity Recognition (NER) Benchmark & Deployment
 
 Classify English text entities into four standard categories (**PER, ORG, LOC, MISC**). This end-to-end Machine Learning project systematically compares custom recurrent architectures (**LSTM, BiLSTM, BiLSTM + CRF**) with a fine-tuned **BERT** transformer. BERT was selected using validation evaluation before held-out test deployment.
+
+---
+
+## 🎬 Application Demo
+
+**▶️ [Watch the Local Deployment Demo](YOUR_DEMO_VIDEO_LINK)**
+
+The following screenshots showcase the locally deployed Gradio application.
+
+### Application Interface
+
+![NER Application Interface](assets/demo-input.png)
+
+### Entity Extraction Results
+
+![NER Prediction Results](assets/demo-results.png)
 
 ---
 
@@ -61,6 +76,7 @@ git clone https://github.com/Samira-Hassann/Real-time-Named-Entity-Recognition-N
 
 cd Real-time-Named-Entity-Recognition-NER-web-application-
 ```
+
 ### 2. Create and Activate a Virtual Environment
 
 **Windows PowerShell:**
@@ -140,11 +156,15 @@ The model weights (`safetensors`) and tokenizer are downloaded directly from the
 ## 📁 Project Structure
 
 ```text
-ner-conll2003-benchmark/
+Real-time-Named-Entity-Recognition-NER-web-application-/
 │
 ├── app.py
 ├── requirements.txt
-└── README.md
+├── README.md
+│
+└── assets/
+    ├── demo-input.png
+    └── demo-results.png
 ```
 
 ---
